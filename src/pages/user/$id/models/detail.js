@@ -1,8 +1,9 @@
-import pathToRegexp from 'path-to-regexp'
-import { query } from '../../services/user'
+import { pathMatchRegexp } from 'utils'
+import api from 'api'
+
+const { queryUser } = api
 
 export default {
-
   namespace: 'userDetail',
 
   state: {
@@ -10,9 +11,9 @@ export default {
   },
 
   subscriptions: {
-    setup ({ dispatch, history }) {
+    setup({ dispatch, history }) {
       history.listen(({ pathname }) => {
-        const match = pathToRegexp('/user/:id').exec(pathname)
+        const match = pathMatchRegexp('/user/:id', pathname)
         if (match) {
           dispatch({ type: 'query', payload: { id: match[1] } })
         }
@@ -21,13 +22,9 @@ export default {
   },
 
   effects: {
-    * query ({
-      payload,
-    }, { call, put }) {
-      const data = yield call(query, payload)
-      const {
-        success, message, status, ...other
-      } = data
+    *query({ payload }, { call, put }) {
+      const data = yield call(queryUser, payload)
+      const { success, message, status, ...other } = data
       if (success) {
         yield put({
           type: 'querySuccess',
@@ -42,7 +39,7 @@ export default {
   },
 
   reducers: {
-    querySuccess (state, { payload }) {
+    querySuccess(state, { payload }) {
       const { data } = payload
       return {
         ...state,

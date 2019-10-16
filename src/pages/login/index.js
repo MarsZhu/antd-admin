@@ -1,21 +1,22 @@
-import React from 'react'
+import React, { PureComponent, Fragment } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'dva'
-import { Button, Row, Form, Input } from 'antd'
-import { config } from 'utils'
-import styles from './index.less'
+import { Button, Row, Form, Icon, Input } from 'antd'
+import { GlobalFooter } from 'ant-design-pro'
+import { Trans, withI18n } from '@lingui/react'
+import { setLocale } from 'utils'
+import config from 'utils/config'
 
+import styles from './index.less'
 const FormItem = Form.Item
 
-const Login = ({
-  loading,
-  dispatch,
-  form: {
-    getFieldDecorator,
-    validateFieldsAndScroll,
-  },
-}) => {
-  function handleOk () {
+@withI18n()
+@connect(({ loading }) => ({ loading }))
+@Form.create()
+class Login extends PureComponent {
+  handleOk = () => {
+    const { dispatch, form } = this.props
+    const { validateFieldsAndScroll } = form
     validateFieldsAndScroll((errors, values) => {
       if (errors) {
         return
@@ -24,44 +25,94 @@ const Login = ({
     })
   }
 
-  return (
-    <div className={styles.form}>
-      <div className={styles.logo}>
-        <img alt="logo" src={config.logo} />
-        <span>{config.name}</span>
-      </div>
-      <form>
-        <FormItem hasFeedback>
-          {getFieldDecorator('username', {
-            rules: [
-              {
-                required: true,
-              },
-            ],
-          })(<Input onPressEnter={handleOk} placeholder="Username" />)}
-        </FormItem>
-        <FormItem hasFeedback>
-          {getFieldDecorator('password', {
-            rules: [
-              {
-                required: true,
-              },
-            ],
-          })(<Input type="password" onPressEnter={handleOk} placeholder="Password" />)}
-        </FormItem>
-        <Row>
-          <Button type="primary" onClick={handleOk} loading={loading.effects.login}>
-            Sign in
-          </Button>
-          <p>
-            <span>Username：guest</span>
-            <span>Password：guest</span>
-          </p>
-        </Row>
+  render() {
+    const { loading, form, i18n } = this.props
+    const { getFieldDecorator } = form
 
-      </form>
-    </div>
-  )
+    let footerLinks = [
+      {
+        key: 'github',
+        title: <Icon type="github" />,
+        href: 'https://github.com/zuiidea/antd-admin',
+        blankTarget: true,
+      },
+    ]
+
+    if (config.i18n) {
+      footerLinks = footerLinks.concat(
+        config.i18n.languages.map(item => ({
+          key: item.key,
+          title: (
+            <span onClick={setLocale.bind(null, item.key)}>{item.title}</span>
+          ),
+        }))
+      )
+    }
+
+    return (
+      <Fragment>
+        <div className={styles.form}>
+          <div className={styles.logo}>
+            <img alt="logo" src={config.logoPath} />
+            <span>{config.siteName}</span>
+          </div>
+          <form>
+            <FormItem hasFeedback>
+              {getFieldDecorator('username', {
+                rules: [
+                  {
+                    required: true,
+                  },
+                ],
+              })(
+                <Input
+                  onPressEnter={this.handleOk}
+                  placeholder={i18n.t`Username`}
+                />
+              )}
+            </FormItem>
+            <FormItem hasFeedback>
+              {getFieldDecorator('password', {
+                rules: [
+                  {
+                    required: true,
+                  },
+                ],
+              })(
+                <Input
+                  type="password"
+                  onPressEnter={this.handleOk}
+                  placeholder={i18n.t`Password`}
+                />
+              )}
+            </FormItem>
+            <Row>
+              <Button
+                type="primary"
+                onClick={this.handleOk}
+                loading={loading.effects.login}
+              >
+                <Trans>Sign in</Trans>
+              </Button>
+              <p>
+                <span>
+                  <Trans>Username</Trans>
+                  ：guest
+                </span>
+                <span>
+                  <Trans>Password</Trans>
+                  ：guest
+                </span>
+              </p>
+            </Row>
+          </form>
+        </div>
+        <div className={styles.footer}>
+          <GlobalFooter links={footerLinks} copyright={config.copyright} />
+        </div>
+      </Fragment>
+    )
+  }
 }
 
 Login.propTypes = {
@@ -70,4 +121,4 @@ Login.propTypes = {
   loading: PropTypes.object,
 }
 
-export default connect(({ loading }) => ({ loading }))(Form.create()(Login))
+export default Login

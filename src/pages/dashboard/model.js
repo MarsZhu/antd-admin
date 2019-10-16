@@ -1,8 +1,10 @@
 import { parse } from 'qs'
 import modelExtend from 'dva-model-extend'
-import { query } from './services/dashboard'
+import api from 'api'
+import { pathMatchRegexp } from 'utils'
 import { model } from 'utils/model'
-import * as weatherService from './services/weather'
+
+const { queryDashboard, queryWeather } = api
 
 export default modelExtend(model, {
   namespace: 'dashboard',
@@ -15,7 +17,8 @@ export default modelExtend(model, {
     },
     sales: [],
     quote: {
-      avatar: 'http://img.hb.aicdn.com/bc442cf0cc6f7940dcc567e465048d1a8d634493198c4-sPx5BR_fw236',
+      avatar:
+        'http://img.hb.aicdn.com/bc442cf0cc6f7940dcc567e465048d1a8d634493198c4-sPx5BR_fw236',
     },
     numbers: [],
     recentSales: [],
@@ -24,13 +27,17 @@ export default modelExtend(model, {
     browser: [],
     cpu: {},
     user: {
-      avatar: 'http://img.hb.aicdn.com/bc442cf0cc6f7940dcc567e465048d1a8d634493198c4-sPx5BR_fw236',
+      avatar:
+        'http://img.hb.aicdn.com/bc442cf0cc6f7940dcc567e465048d1a8d634493198c4-sPx5BR_fw236',
     },
   },
   subscriptions: {
-    setup ({ dispatch, history }) {
+    setup({ dispatch, history }) {
       history.listen(({ pathname }) => {
-        if (pathname === '/dashboard' || pathname === '/') {
+        if (
+          pathMatchRegexp('/dashboard', pathname) ||
+          pathMatchRegexp('/', pathname)
+        ) {
           dispatch({ type: 'query' })
           dispatch({ type: 'queryWeather' })
         }
@@ -38,20 +45,16 @@ export default modelExtend(model, {
     },
   },
   effects: {
-    * query ({
-      payload,
-    }, { call, put }) {
-      const data = yield call(query, parse(payload))
+    *query({ payload }, { call, put }) {
+      const data = yield call(queryDashboard, parse(payload))
       yield put({
         type: 'updateState',
         payload: data,
       })
     },
-    * queryWeather ({
-      payload = {},
-    }, { call, put }) {
+    *queryWeather({ payload = {} }, { call, put }) {
       payload.location = 'shenzhen'
-      const result = yield call(weatherService.query, payload)
+      const result = yield call(queryWeather, payload)
       const { success } = result
       if (success) {
         const data = result.results[0]
